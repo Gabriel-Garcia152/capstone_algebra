@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infográfico: A Matemática por Trás do Pac-Man</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Energetic & Playful -->
+    <!-- Application Structure Plan: A single-page, scrollable narrative infographic. A sticky top navigation bar allows users to jump between four key sections, each dedicated to a core linear algebra concept from the report. Each section uses a two-column layout, pairing concise explanatory text with a large, interactive canvas visualization. This structure was chosen to transform the static report into a dynamic, "read-then-do" learning experience, making abstract concepts tangible. The linear flow guides new users, while the navigation supports quick reference for those already familiar with the topics. -->
+    <!-- Visualization & Content Choices: 1. Vectors: Report text explains vectors. Goal: Inform. Viz: Interactive Canvas diagram showing Pac-Man. Interaction: Hovering over direction buttons draws the corresponding vector. Justification: Visually connects the abstract concept of a vector to tangible character movement. Method: JS Canvas API. 2. Operations: Report text explains vector subtraction. Goal: Show Relationship. Viz: Canvas diagram of a ghost and Pac-Man. Interaction: A button click calculates and draws the chase vector between them. Justification: Clearly demonstrates how subtraction results in a direction, forming the basis of AI. Method: JS Canvas API. 3. Norm: Report text explains distance calculation. Goal: Compare/Decide. Viz: Canvas diagram of a ghost at a fork. Interaction: A button click calculates the norm for two possible paths and highlights the shorter one. Justification: Demystifies the AI's decision-making process by visualizing the distance comparison. Method: JS Canvas API. 4. Matrix: Report text explains the adjacency matrix. Goal: Organize. Viz: Interactive canvas diagram linking a visual map to its matrix representation. Interaction: Hovering over map nodes highlights the corresponding row/column in the matrix. Justification: Bridges the gap between the physical layout of a level and its abstract data structure. Method: JS Canvas API & HTML. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1F2937;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Press Start 2P', cursive;
+        }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            transform: scaleX(0);
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #FBBF24;
+            transform-origin: bottom right;
+            transition: transform 0.3s ease-out;
+        }
+        .nav-link:hover {
+            color: #FBBF24;
+        }
+        .nav-link:hover::after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+        .card {
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 350px;
+            max-height: 400px;
+        }
+        .interactive-canvas {
+            background-color: #111827;
+            border-radius: 0.75rem;
+            border: 4px solid #374151;
+        }
+        .btn-action {
+            font-family: 'Press Start 2P', cursive;
+            transition: all 0.2s;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            color: #111827;
+        }
+        .btn-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .formula {
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 0.25rem;
+        }
+        .matrix {
+            display: inline-flex;
+            align-items: center;
+            border-left: 2px solid #374151;
+            border-right: 2px solid #374151;
+            padding: 0 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .norm {
+            display: inline-flex;
+            align-items: center;
+            border-left: 2px solid #374151;
+            border-right: 2px solid #374151;
+            padding: 0 0.25rem;
+            font-weight: bold;
+        }
+        .norm::before, .norm::after {
+            content: '';
+            display: inline-block;
+            width: 2px;
+            background: #374151;
+            margin: 0 2px;
+            align-self: stretch;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-lg md:text-xl text-gray-800">Pac-Math</h1>
+            <div class="hidden md:flex space-x-8 text-sm font-semibold text-gray-600">
+                <a href="#jogo" class="nav-link">Jogo</a>
+                <a href="#vetores" class="nav-link">Vetores</a>
+                <a href="#operacoes" class="nav-link">Operações</a>
+                <a href="#norma" class="nav-link">Norma</a>
+                <a href="#matriz" class="nav-link">Matriz</a>
+                <a href="#glossario" class="nav-link">Glossário</a>
+                <a href="#como-rodar" class="nav-link">Como rodar</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <section class="text-center my-12 md:my-20">
+            <h2 class="text-3xl md:text-5xl mb-4 text-gray-900">A Matemática por Trás do Fantasma</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-500">
+                Uma análise interativa de como a Álgebra Linear dá vida, movimento e inteligência a um dos maiores clássicos dos videogames.
+            </p>
+        </section>
+
+        <div class="space-y-20">
+            <!-- Seção do Jogo -->
+            <section id="jogo" class="card">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 class="text-xl mb-4 text-[#10B981]">00. O Jogo: Contexto do Projeto</h3>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            Este projeto implementa um Pac-Man em Python. Pac-Man e os fantasmas se movem em um tabuleiro discreto, e as decisões de perseguição usam operações vetoriais, distância e estrutura de grafo do labirinto.
+                        </p>
+                        <ul class="list-disc pl-5 text-gray-600 space-y-2">
+                            <li>Movimento do Pac-Man: soma de um <strong>vetor direção</strong> à posição.</li>
+                            <li>Perseguição do fantasma: <strong>subtração de vetores</strong> para apontar ao Pac-Man.</li>
+                            <li>Escolha de caminho: comparação de <strong>normas (distâncias)</strong>.</li>
+                            <li>Validação de movimento: <strong>matriz de adjacência</strong> do labirinto.</li>
+                        </ul>
+                        <div class="mt-6 p-3 bg-gray-50 border rounded">
+                            <p class="text-xs text-gray-500 mb-2">Como executar (Windows/PowerShell):</p>
+                            <pre class="bg-gray-900 text-gray-100 text-xs p-3 rounded overflow-x-auto"><code>cd c:\Users\lucas\IdeaProjects\capstone_algebra
+python pacman.py</code></pre>
+                            <button id="copy-run" class="btn-action bg-[#10B981] mt-3">Copiar comando</button>
+                        </div>
+                    </div>
+                    <div class="w-full flex justify-center">
+                        <img src="pacmanlvl1.jpg" alt="Screenshot do nível do Pac-Man" class="rounded-lg border shadow max-h-[340px] object-contain" />
+                    </div>
+                </div>
+            </section>
+
+            <section id="vetores" class="card">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-xl mb-4 text-[#D97706]">01. Vetores: Descrevendo o Mundo</h3>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            A primeira abstração foi representar a posição e a direção. Em vez de coordenadas `(x, y)`, tratamos o Pac-Man como um <strong>vetor de posição</strong>
+                            <span class="formula font-serif italic">p⃗</span> = <span class="formula matrix"><table><tr><td>x</td></tr><tr><td>y</td></tr></table></span>.
+                            O movimento é um <strong>vetor de direção</strong>, como
+                            <span class="formula font-serif italic">d⃗</span> = <span class="formula matrix"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>
+                            para a direita.
+                        </p>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            No jogo, a nova posição é calculada por <em>p⃗' = p⃗ + v · d⃗</em>, onde <em>v</em> é a velocidade. Em um grid, <em>d⃗</em> costuma ser um dos vetores base: (1,0), (-1,0), (0,1), (0,-1).
+                        </p>
+                        <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
+                            <p class="font-semibold mb-2">Código (conceito em Python):</p>
+                            <pre class="bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto"><code># posição e direção
+px, py = 5, 7
+dx, dy = 1, 0  # direita
+speed = 1      # 1 célula por passo
+px, py = px + dx*speed, py + dy*speed</code></pre>
+                        </div>
+                        <p class="text-gray-500">
+                            Passe o mouse sobre os botões para visualizar os vetores de direção correspondentes no canvas.
+                        </p>
+                        <div class="flex space-x-2 mt-6">
+                            <button id="dir-up" class="btn-action bg-[#3B82F6]">Cima</button>
+                            <button id="dir-down" class="btn-action bg-[#3B82F6]">Baixo</button>
+                            <button id="dir-left" class="btn-action bg-[#3B82F6]">Esquerda</button>
+                            <button id="dir-right" class="btn-action bg-[#3B82F6]">Direita</button>
+                        </div>
+                    </div>
+                    <div class="chart-container mx-auto">
+                        <canvas id="vectorCanvas" class="interactive-canvas w-full h-full"></canvas>
+                        <div class="text-center text-xs text-gray-500 mt-2">d⃗ = (dx, dy)</div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="operacoes" class="card">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="md:order-last">
+                        <h3 class="text-xl mb-4 text-[#EF4444]">02. Operações: A Lógica da Perseguição</h3>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            A "inteligência" dos fantasmas nasce da <strong>subtração de vetores</strong>. Para perseguir, um fantasma calcula o vetor que o conecta ao Pac-Man:
+                            <span class="formula font-serif italic">v⃗<sub>caminho</sub> = p⃗<sub>pacman</sub> - p⃗<sub>fantasma</sub></span>.
+                        </p>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            Esse vetor aponta a direção geral de movimento. Em cada decisão, o fantasma escolhe a ação que mais aproxima sua posição ao longo de <em>v⃗<sub>caminho</sub></em>.
+                        </p>
+                        <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
+                            <p class="font-semibold mb-2">Código (conceito em Python):</p>
+                            <pre class="bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto"><code># vetor de perseguição
+gx, gy = 2, 6
+px, py = 8, 4
+vx, vy = px - gx, py - gy  # v⃗_caminho
+
+# escolher próximo passo no grid que melhor alinha com v⃗_caminho
+opcoes = [(1,0), (-1,0), (0,1), (0,-1)]
+dx, dy = max(opcoes, key=lambda d: d[0]*vx + d[1]*vy)  # maior produto interno
+gx, gy = gx + dx, gy + dy</code></pre>
+                            <p class="mt-2 text-[11px] text-gray-500">Usamos o produto interno d·v para escolher a direção mais alinhada ao vetor de perseguição.</p>
+                        </div>
+                        <p class="text-gray-500">
+                           Clique no botão para calcular e traçar o vetor de perseguição do fantasma até o Pac-Man.
+                        </p>
+                        <div class="mt-6">
+                           <button id="calc-chase" class="btn-action bg-[#EF4444]">Calcular Vetor</button>
+                        </div>
+                    </div>
+                    <div class="chart-container mx-auto">
+                        <canvas id="opsCanvas" class="interactive-canvas w-full h-full"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="norma" class="card">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-xl mb-4 text-[#06B6D4]">03. Norma: A Tomada de Decisão</h3>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            Numa encruzilhada, qual o caminho mais curto? A resposta vem da <strong>norma de um vetor</strong>, que nos dá a distância:
+                            <span class="formula">dist = <span class="norm"><span class="font-serif italic">p⃗<sub>alvo</sub> - p⃗<sub>fantasma</sub></span></span></span>.
+                        </p>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            Em grids, duas métricas são comuns: <em>Euclidiana</em> (√(Δx²+Δy²)) e <em>Manhattan</em> (|Δx|+|Δy|). A Euclidiana favorece a reta; a Manhattan favorece caminhos ortogonais. O jogo pode adotar qualquer uma nas comparações.
+                        </p>
+                        <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
+                            <p class="font-semibold mb-2">Código (conceito em Python):</p>
+                            <pre class="bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto"><code>from math import hypot
+
+def dist_euclid(a, b):
+    return hypot(a[0]-b[0], a[1]-b[1])
+
+def dist_manhattan(a, b):
+    return abs(a[0]-b[0]) + abs(a[1]-b[1])
+
+melhor = min(opcoes_de_caminho, key=lambda p: dist_euclid(p, alvo))</code></pre>
+                        </div>
+                        <p class="text-gray-500">
+                           Clique para que o fantasma calcule a distância de cada caminho e escolha o menor para chegar ao seu alvo.
+                        </p>
+                        <div class="mt-6">
+                           <button id="calc-norm" class="btn-action bg-[#06B6D4]">Decidir Caminho</button>
+                        </div>
+                    </div>
+                    <div class="chart-container mx-auto">
+                        <canvas id="normCanvas" class="interactive-canvas w-full h-full"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="matriz" class="card">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="md:order-last">
+                        <h3 class="text-xl mb-4 text-[#F59E0B]">04. Matriz: A Estrutura do Labirinto</h3>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                           O labirinto é um <strong>grafo</strong>, representado por uma <strong>matriz de adjacência</strong>. Se `A[i][j] = 1`, há um caminho do ponto `i` ao `j`. Se for `0`, há uma parede. Uma consulta simples valida qualquer movimento.
+                        </p>
+                        <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
+                            <p class="font-semibold mb-2">Código (conceito em Python):</p>
+                            <pre class="bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto"><code># matriz A com 0/1
+def pode_mover(A, i, j):
+    return A[i][j] == 1
+
+# exemplo de validação
+if pode_mover(A, no_atual, prox_no):
+    no_atual = prox_no</code></pre>
+                        </div>
+                        <p class="text-gray-500">
+                           Passe o mouse sobre os nós (círculos) no mapa para destacar as conexões na matriz.
+                        </p>
+                    </div>
+                    <div class="chart-container mx-auto">
+                        <div class="flex flex-col items-center justify-center h-full">
+                            <canvas id="matrixCanvas" class="interactive-canvas w-full h-[60%]"></canvas>
+                            <div id="matrix-display" class="mt-4 font-mono text-xs md:text-sm bg-gray-800 text-white p-2 rounded w-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Glossário -->
+            <section id="glossario" class="card">
+                <h3 class="text-xl mb-4 text-[#6366F1]">Glossário Rápido</h3>
+                <ul class="list-disc pl-6 text-gray-600 space-y-2">
+                    <li><strong>Vetor:</strong> par ordenado (x, y) com direção e magnitude; representa posição e movimento.</li>
+                    <li><strong>Produto Interno:</strong> soma x<sub>1</sub>x<sub>2</sub>+y<sub>1</sub>y<sub>2</sub>; mede alinhamento entre vetores.</li>
+                    <li><strong>Norma (distância):</strong> tamanho de um vetor; Euclidiana (L2) ou Manhattan (L1).</li>
+                    <li><strong>Matriz de Adjacência:</strong> tabela 0/1 indicando arestas entre nós do grafo.</li>
+                </ul>
+            </section>
+
+            <!-- Como rodar -->
+            <section id="como-rodar" class="card">
+                <h3 class="text-xl mb-4 text-[#111827]">Como rodar o jogo localmente</h3>
+                <ol class="list-decimal pl-6 text-gray-600 space-y-2">
+                    <li>Abra o PowerShell.</li>
+                    <li>Navegue até a pasta do projeto:</li>
+                </ol>
+                <pre class="bg-gray-900 text-gray-100 text-xs p-3 rounded overflow-x-auto mt-2"><code>cd c:\Users\lucas\IdeaProjects\capstone_algebra</code></pre>
+                <ol start="3" class="list-decimal pl-6 text-gray-600 space-y-2 mt-2">
+                    <li>Execute o jogo:</li>
+                </ol>
+                <pre class="bg-gray-900 text-gray-100 text-xs p-3 rounded overflow-x-auto mt-2"><code>python pacman.py</code></pre>
+                <p class="text-xs text-gray-500 mt-3">Dica: se <code>python</code> não funcionar, tente <code>py pacman.py</code>.</p>
+            </section>
+        </div>
+    </main>
+
+    <footer class="text-center py-10 mt-20 bg-gray-900 text-gray-400 text-sm">
+        <p>Infográfico interativo baseado no relatório "A Matemática por Trás do Fantasma".</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const setupCanvas = (canvas) => {
+                if (!canvas) return null;
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                const ctx = canvas.getContext('2d');
+                ctx.scale(dpr, dpr);
+                return ctx;
+            };
+
+            function drawPacman(ctx, x, y, radius, openAngle) {
+                ctx.fillStyle = '#FBBF24';
+                ctx.beginPath();
+                ctx.arc(x, y, radius, openAngle, Math.PI * 2 - openAngle);
+                ctx.lineTo(x, y);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            function drawGhost(ctx, x, y, radius, color) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, Math.PI, 0);
+                const base_y = y + radius * 1.2;
+                ctx.lineTo(x + radius, base_y);
+                ctx.lineTo(x + radius * 0.6, base_y - radius * 0.4);
+                ctx.lineTo(x + radius * 0.2, base_y);
+                ctx.lineTo(x - radius * 0.2, base_y - radius * 0.4);
+                ctx.lineTo(x - radius * 0.6, base_y);
+                ctx.lineTo(x - radius, base_y - radius * 0.4);
+                ctx.lineTo(x - radius, y);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x - radius/2.5, y - radius/5, radius/3, 0, Math.PI*2);
+                ctx.arc(x + radius/2.5, y - radius/5, radius/3, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(x - radius/2.5, y - radius/5, radius/6, 0, Math.PI*2);
+                ctx.arc(x + radius/2.5, y - radius/5, radius/6, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            function drawVector(ctx, fromX, fromY, toX, toY, color, lineWidth = 3) {
+                const headlen = 10;
+                const dx = toX - fromX;
+                const dy = toY - fromY;
+                const angle = Math.atan2(dy, dx);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.beginPath();
+                ctx.moveTo(fromX, fromY);
+                ctx.lineTo(toX, toY);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(toX, toY);
+                ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+                ctx.moveTo(toX, toY);
+                ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+                ctx.stroke();
+            }
+
+            const vCanvas = document.getElementById('vectorCanvas');
+            let vCtx = setupCanvas(vCanvas);
+            const pacmanPos = { x: vCanvas.clientWidth / 2, y: vCanvas.clientHeight / 2 };
+
+        function drawVectorScene(direction = null) {
+                if (!vCtx) return;
+                vCtx.clearRect(0, 0, vCanvas.width, vCanvas.height);
+                drawPacman(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, 25, 0.35);
+                if (direction) {
+                    drawVector(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, vCanvas.clientWidth / 2 + direction.x * 60, vCanvas.clientHeight / 2 + direction.y * 60, '#3B82F6');
+            // rótulo do vetor
+            vCtx.fillStyle = '#9CA3AF';
+            vCtx.font = '10px "Press Start 2P"';
+            vCtx.textAlign = 'left';
+            vCtx.fillText(`d=(${direction.x}, ${direction.y})`, 8, 16);
+                }
+            }
+            
+            document.getElementById('dir-up').addEventListener('mouseenter', () => drawVectorScene({x: 0, y: -1}));
+            document.getElementById('dir-down').addEventListener('mouseenter', () => drawVectorScene({x: 0, y: 1}));
+            document.getElementById('dir-left').addEventListener('mouseenter', () => drawVectorScene({x: -1, y: 0}));
+            document.getElementById('dir-right').addEventListener('mouseenter', () => drawVectorScene({x: 1, y: 0}));
+            [...document.querySelectorAll('#dir-up, #dir-down, #dir-left, #dir-right')].forEach(el => {
+                el.addEventListener('mouseleave', () => drawVectorScene());
+            });
+
+            const opsCanvas = document.getElementById('opsCanvas');
+            let opsCtx = setupCanvas(opsCanvas);
+            
+            function drawOpsScene(showVector = false) {
+                if (!opsCtx) return;
+                const opsPacman = { x: opsCanvas.clientWidth * 0.7, y: opsCanvas.clientHeight * 0.4 };
+                const opsGhost = { x: opsCanvas.clientWidth * 0.3, y: opsCanvas.clientHeight * 0.6 };
+                opsCtx.clearRect(0, 0, opsCanvas.width, opsCanvas.height);
+                drawPacman(opsCtx, opsPacman.x, opsPacman.y, 25, 0.35);
+                drawGhost(opsCtx, opsGhost.x, opsGhost.y, 25, '#EF4444');
+                if (showVector) {
+                    drawVector(opsCtx, opsGhost.x, opsGhost.y, opsPacman.x, opsPacman.y, '#F472B6');
+                }
+            }
+            document.getElementById('calc-chase').addEventListener('click', () => drawOpsScene(true));
+            
+            const normCanvas = document.getElementById('normCanvas');
+            let normCtx = setupCanvas(normCanvas);
+
+            function drawNormScene(decision = false) {
+                if (!normCtx) return;
+                const normTarget = { x: normCanvas.clientWidth * 0.85, y: normCanvas.clientHeight / 2 };
+                const normGhost = { x: normCanvas.clientWidth * 0.15, y: normCanvas.clientHeight / 2 };
+                const path1 = { x: normCanvas.clientWidth * 0.5, y: normCanvas.clientHeight * 0.25 };
+                const path2 = { x: normCanvas.clientWidth * 0.5, y: normCanvas.clientHeight * 0.75 };
+
+                normCtx.clearRect(0, 0, normCanvas.width, normCanvas.height);
+                normCtx.strokeStyle = '#4A5568';
+                normCtx.lineWidth = 4;
+                normCtx.setLineDash([5, 5]);
+                normCtx.beginPath();
+                normCtx.moveTo(normGhost.x, normGhost.y);
+                normCtx.lineTo(path1.x, path1.y);
+                normCtx.stroke();
+                normCtx.beginPath();
+                normCtx.moveTo(normGhost.x, normGhost.y);
+                normCtx.lineTo(path2.x, path2.y);
+                normCtx.stroke();
+                normCtx.setLineDash([]);
+                drawPacman(normCtx, normTarget.x, normTarget.y, 20, 0.35);
+                drawGhost(normCtx, normGhost.x, normGhost.y, 20, '#06B6D4');
+                
+                if (decision) {
+                    const dist1 = Math.hypot(normTarget.x - path1.x, normTarget.y - path1.y);
+                    const dist2 = Math.hypot(normTarget.x - path2.x, normTarget.y - path2.y);
+                    
+                    normCtx.font = '10px "Press Start 2P"';
+                    normCtx.fillStyle = '#6B7280';
+                    normCtx.textAlign = 'center';
+                    normCtx.fillText(`d=${dist1.toFixed(0)}`, (path1.x + normTarget.x)/2, (path1.y + normTarget.y)/2 - 10);
+                    drawVector(normCtx, path1.x, path1.y, normTarget.x, normTarget.y, '#6B7280', 2);
+
+                    normCtx.fillText(`d=${dist2.toFixed(0)}`, (path2.x + normTarget.x)/2, (path2.y + normTarget.y)/2 + 20);
+                    drawVector(normCtx, path2.x, path2.y, normTarget.x, normTarget.y, '#6B7280', 2);
+                    
+                    if (dist1 < dist2) {
+                        drawVector(normCtx, normGhost.x, normGhost.y, path1.x, path1.y, '#06B6D4', 4);
+                    } else {
+                        drawVector(normCtx, normGhost.x, normGhost.y, path2.x, path2.y, '#06B6D4', 4);
+                    }
+                }
+            }
+            document.getElementById('calc-norm').addEventListener('click', () => drawNormScene(true));
+
+            const matrixCanvas = document.getElementById('matrixCanvas');
+            let matrixCtx = setupCanvas(matrixCanvas);
+            const matrixDisplay = document.getElementById('matrix-display');
+            const adjMatrix = [
+                [0, 1, 0, 1, 0, 0], [1, 0, 1, 0, 1, 0], [0, 1, 0, 0, 0, 1],
+                [1, 0, 0, 0, 1, 0], [0, 1, 0, 1, 0, 1], [0, 0, 1, 0, 1, 0]
+            ];
+
+            function drawMatrixTable(highlightRow = -1) {
+                let html = '<table><thead><tr><th class="p-1 w-6"></th>';
+                adjMatrix.forEach((_, i) => html += `<th class="p-1 w-6 text-center ${highlightRow === i ? 'text-[#F59E0B]' : ''}">${i}</th>`);
+                html += '</tr></thead><tbody>';
+                adjMatrix.forEach((row, i) => {
+                    html += `<tr class="${highlightRow === i ? 'text-[#F59E0B]' : ''}"><td class="font-bold text-center">${i}</td>`;
+                    row.forEach((cell, j) => html += `<td class="p-1 text-center ${highlightRow !== -1 && adjMatrix[highlightRow][j] === 1 ? 'text-[#F59E0B] font-bold' : ''}">${cell}</td>`);
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                matrixDisplay.innerHTML = html;
+            }
+
+            function drawMatrixScene(highlightNode = null) {
+                if (!matrixCtx) return;
+                const nodes = [
+                    { x: 60, y: 40, name: '0' }, { x: 150, y: 40, name: '1' }, { x: 240, y: 40, name: '2' },
+                    { x: 60, y: 120, name: '3' }, { x: 150, y: 120, name: '4' }, { x: 240, y: 120, name: '5' }
+                ].map(n => ({...n, x: n.x * (matrixCanvas.clientWidth / 300), y: n.y * (matrixCanvas.clientHeight / 160)}));
+
+                matrixCtx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+                matrixCtx.lineWidth = 3;
+                for (let i = 0; i < adjMatrix.length; i++) {
+                    for (let j = i; j < adjMatrix[i].length; j++) {
+                        if (adjMatrix[i][j] === 1) {
+                            matrixCtx.strokeStyle = (highlightNode && (highlightNode.name == i || highlightNode.name == j)) ? '#F59E0B' : '#4A5568';
+                            matrixCtx.beginPath();
+                            matrixCtx.moveTo(nodes[i].x, nodes[i].y);
+                            matrixCtx.lineTo(nodes[j].x, nodes[j].y);
+                            matrixCtx.stroke();
+                        }
+                    }
+                }
+                nodes.forEach((node) => {
+                    matrixCtx.fillStyle = (highlightNode && highlightNode.name === node.name) ? '#F59E0B' : '#FBBF24';
+                    matrixCtx.beginPath();
+                    matrixCtx.arc(node.x, node.y, 18, 0, Math.PI * 2);
+                    matrixCtx.fill();
+                    matrixCtx.fillStyle = 'black';
+                    matrixCtx.font = '12px "Press Start 2P"';
+                    matrixCtx.textAlign = 'center';
+                    matrixCtx.textBaseline = 'middle';
+                    matrixCtx.fillText(node.name, node.x, node.y + 1);
+                });
+                drawMatrixTable(highlightNode ? parseInt(highlightNode.name) : -1);
+            }
+            
+            matrixCanvas.addEventListener('mousemove', (e) => {
+                const rect = matrixCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const nodes = [
+                    { x: 60, y: 40, name: '0' }, { x: 150, y: 40, name: '1' }, { x: 240, y: 40, name: '2' },
+                    { x: 60, y: 120, name: '3' }, { x: 150, y: 120, name: '4' }, { x: 240, y: 120, name: '5' }
+                ].map(n => ({...n, x: n.x * (matrixCanvas.clientWidth / 300), y: n.y * (matrixCanvas.clientHeight / 160)}));
+                let hoveredNode = null;
+                for (const node of nodes) {
+                    const dist = Math.hypot(node.x - x, node.y - y);
+                    if (dist < 18) {
+                        hoveredNode = node;
+                        break;
+                    }
+                }
+                drawMatrixScene(hoveredNode);
+            });
+            matrixCanvas.addEventListener('mouseleave', () => drawMatrixScene(null));
+
+            function initializeCanvases() {
+                vCtx = setupCanvas(vCanvas);
+                opsCtx = setupCanvas(opsCanvas);
+                normCtx = setupCanvas(normCanvas);
+                matrixCtx = setupCanvas(matrixCanvas);
+                
+                drawVectorScene();
+                drawOpsScene();
+                drawNormScene();
+                drawMatrixScene();
+            }
+            
+            window.addEventListener('resize', initializeCanvases);
+
+            initializeCanvases();
+
+            // copiar comando de execução
+            const copyBtn = document.getElementById('copy-run');
+            if (copyBtn && navigator.clipboard) {
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText('cd c\\\\Users\\\\lucas\\\\IdeaProjects\\\\capstone_algebra\npython pacman.py');
+                        copyBtn.textContent = 'Copiado!';
+                        setTimeout(() => (copyBtn.textContent = 'Copiar comando'), 1500);
+                    } catch (e) {
+                        copyBtn.textContent = 'Falhou :(';
+                        setTimeout(() => (copyBtn.textContent = 'Copiar comando'), 1500);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
