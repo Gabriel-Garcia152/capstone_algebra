@@ -113,10 +113,13 @@
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <h1 class="text-lg md:text-xl text-gray-800">Pac-Math</h1>
             <div class="hidden md:flex space-x-8 text-sm font-semibold text-gray-600">
+                <a href="#jogo" class="nav-link">Jogo</a>
                 <a href="#vetores" class="nav-link">Vetores</a>
                 <a href="#operacoes" class="nav-link">Operações</a>
                 <a href="#norma" class="nav-link">Norma</a>
                 <a href="#matriz" class="nav-link">Matriz</a>
+                <a href="#glossario" class="nav-link">Glossário</a>
+                <a href="#como-rodar" class="nav-link">Como rodar</a>
             </div>
         </nav>
     </header>
@@ -130,6 +133,33 @@
         </section>
 
         <div class="space-y-20">
+            <!-- Seção do Jogo -->
+            <section id="jogo" class="card">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 class="text-xl mb-4 text-[#10B981]">00. O Jogo: Contexto do Projeto</h3>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            Este projeto implementa um Pac-Man em Python. Pac-Man e os fantasmas se movem em um tabuleiro discreto, e as decisões de perseguição usam operações vetoriais, distância e estrutura de grafo do labirinto.
+                        </p>
+                        <ul class="list-disc pl-5 text-gray-600 space-y-2">
+                            <li>Movimento do Pac-Man: soma de um <strong>vetor direção</strong> à posição.</li>
+                            <li>Perseguição do fantasma: <strong>subtração de vetores</strong> para apontar ao Pac-Man.</li>
+                            <li>Escolha de caminho: comparação de <strong>normas (distâncias)</strong>.</li>
+                            <li>Validação de movimento: <strong>matriz de adjacência</strong> do labirinto.</li>
+                        </ul>
+                        <div class="mt-6 p-3 bg-gray-50 border rounded">
+                            <p class="text-xs text-gray-500 mb-2">Como executar (Windows/PowerShell):</p>
+                            <pre class="bg-gray-900 text-gray-100 text-xs p-3 rounded overflow-x-auto"><code>cd c:\Users\lucas\IdeaProjects\capstone_algebra
+python pacman.py</code></pre>
+                            <button id="copy-run" class="btn-action bg-[#10B981] mt-3">Copiar comando</button>
+                        </div>
+                    </div>
+                    <div class="w-full flex justify-center">
+                        <img src="pacmanlvl1.jpg" alt="Screenshot do nível do Pac-Man" class="rounded-lg border shadow max-h-[340px] object-contain" />
+                    </div>
+                </div>
+            </section>
+
             <section id="vetores" class="card">
                 <div class="grid md:grid-cols-2 gap-12 items-center">
                     <div>
@@ -141,6 +171,17 @@
                             <span class="formula font-serif italic">d⃗</span> = <span class="formula matrix"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>
                             para a direita.
                         </p>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            No jogo, a nova posição é calculada por <em>p⃗' = p⃗ + v · d⃗</em>, onde <em>v</em> é a velocidade. Em um grid, <em>d⃗</em> costuma ser um dos vetores base: (1,0), (-1,0), (0,1), (0,-1).
+                        </p>
+                        <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
+                            <p class="font-semibold mb-2">Código (conceito em Python):</p>
+                            <pre class="bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto"><code># posição e direção
+px, py = 5, 7
+dx, dy = 1, 0  # direita
+speed = 1      # 1 célula por passo
+px, py = px + dx*speed, py + dy*speed</code></pre>
+                        </div>
                         <p class="text-gray-500">
                             Passe o mouse sobre os botões para visualizar os vetores de direção correspondentes no canvas.
                         </p>
@@ -153,6 +194,7 @@
                     </div>
                     <div class="chart-container mx-auto">
                         <canvas id="vectorCanvas" class="interactive-canvas w-full h-full"></canvas>
+                        <div class="text-center text-xs text-gray-500 mt-2">d⃗ = (dx, dy)</div>
                     </div>
                 </div>
             </section>
@@ -165,6 +207,22 @@
                             A "inteligência" dos fantasmas nasce da <strong>subtração de vetores</strong>. Para perseguir, um fantasma calcula o vetor que o conecta ao Pac-Man:
                             <span class="formula font-serif italic">v⃗<sub>caminho</sub> = p⃗<sub>pacman</sub> - p⃗<sub>fantasma</sub></span>.
                         </p>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            Esse vetor aponta a direção geral de movimento. Em cada decisão, o fantasma escolhe a ação que mais aproxima sua posição ao longo de <em>v⃗<sub>caminho</sub></em>.
+                        </p>
+                        <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
+                            <p class="font-semibold mb-2">Código (conceito em Python):</p>
+                            <pre class="bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto"><code># vetor de perseguição
+gx, gy = 2, 6
+px, py = 8, 4
+vx, vy = px - gx, py - gy  # v⃗_caminho
+
+# escolher próximo passo no grid que melhor alinha com v⃗_caminho
+opcoes = [(1,0), (-1,0), (0,1), (0,-1)]
+dx, dy = max(opcoes, key=lambda d: d[0]*vx + d[1]*vy)  # maior produto interno
+gx, gy = gx + dx, gy + dy</code></pre>
+                            <p class="mt-2 text-[11px] text-gray-500">Usamos o produto interno d·v para escolher a direção mais alinhada ao vetor de perseguição.</p>
+                        </div>
                         <p class="text-gray-500">
                            Clique no botão para calcular e traçar o vetor de perseguição do fantasma até o Pac-Man.
                         </p>
@@ -186,6 +244,21 @@
                             Numa encruzilhada, qual o caminho mais curto? A resposta vem da <strong>norma de um vetor</strong>, que nos dá a distância:
                             <span class="formula">dist = <span class="norm"><span class="font-serif italic">p⃗<sub>alvo</sub> - p⃗<sub>fantasma</sub></span></span></span>.
                         </p>
+                        <p class="mb-4 text-gray-600 leading-relaxed">
+                            Em grids, duas métricas são comuns: <em>Euclidiana</em> (√(Δx²+Δy²)) e <em>Manhattan</em> (|Δx|+|Δy|). A Euclidiana favorece a reta; a Manhattan favorece caminhos ortogonais. O jogo pode adotar qualquer uma nas comparações.
+                        </p>
+                        <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
+                            <p class="font-semibold mb-2">Código (conceito em Python):</p>
+                            <pre class="bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto"><code>from math import hypot
+
+def dist_euclid(a, b):
+    return hypot(a[0]-b[0], a[1]-b[1])
+
+def dist_manhattan(a, b):
+    return abs(a[0]-b[0]) + abs(a[1]-b[1])
+
+melhor = min(opcoes_de_caminho, key=lambda p: dist_euclid(p, alvo))</code></pre>
+                        </div>
                         <p class="text-gray-500">
                            Clique para que o fantasma calcule a distância de cada caminho e escolha o menor para chegar ao seu alvo.
                         </p>
@@ -206,6 +279,16 @@
                         <p class="mb-4 text-gray-600 leading-relaxed">
                            O labirinto é um <strong>grafo</strong>, representado por uma <strong>matriz de adjacência</strong>. Se `A[i][j] = 1`, há um caminho do ponto `i` ao `j`. Se for `0`, há uma parede. Uma consulta simples valida qualquer movimento.
                         </p>
+                        <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
+                            <p class="font-semibold mb-2">Código (conceito em Python):</p>
+                            <pre class="bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto"><code># matriz A com 0/1
+def pode_mover(A, i, j):
+    return A[i][j] == 1
+
+# exemplo de validação
+if pode_mover(A, no_atual, prox_no):
+    no_atual = prox_no</code></pre>
+                        </div>
                         <p class="text-gray-500">
                            Passe o mouse sobre os nós (círculos) no mapa para destacar as conexões na matriz.
                         </p>
@@ -217,6 +300,32 @@
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Glossário -->
+            <section id="glossario" class="card">
+                <h3 class="text-xl mb-4 text-[#6366F1]">Glossário Rápido</h3>
+                <ul class="list-disc pl-6 text-gray-600 space-y-2">
+                    <li><strong>Vetor:</strong> par ordenado (x, y) com direção e magnitude; representa posição e movimento.</li>
+                    <li><strong>Produto Interno:</strong> soma x<sub>1</sub>x<sub>2</sub>+y<sub>1</sub>y<sub>2</sub>; mede alinhamento entre vetores.</li>
+                    <li><strong>Norma (distância):</strong> tamanho de um vetor; Euclidiana (L2) ou Manhattan (L1).</li>
+                    <li><strong>Matriz de Adjacência:</strong> tabela 0/1 indicando arestas entre nós do grafo.</li>
+                </ul>
+            </section>
+
+            <!-- Como rodar -->
+            <section id="como-rodar" class="card">
+                <h3 class="text-xl mb-4 text-[#111827]">Como rodar o jogo localmente</h3>
+                <ol class="list-decimal pl-6 text-gray-600 space-y-2">
+                    <li>Abra o PowerShell.</li>
+                    <li>Navegue até a pasta do projeto:</li>
+                </ol>
+                <pre class="bg-gray-900 text-gray-100 text-xs p-3 rounded overflow-x-auto mt-2"><code>cd c:\Users\lucas\IdeaProjects\capstone_algebra</code></pre>
+                <ol start="3" class="list-decimal pl-6 text-gray-600 space-y-2 mt-2">
+                    <li>Execute o jogo:</li>
+                </ol>
+                <pre class="bg-gray-900 text-gray-100 text-xs p-3 rounded overflow-x-auto mt-2"><code>python pacman.py</code></pre>
+                <p class="text-xs text-gray-500 mt-3">Dica: se <code>python</code> não funcionar, tente <code>py pacman.py</code>.</p>
             </section>
         </div>
     </main>
@@ -298,12 +407,17 @@
             let vCtx = setupCanvas(vCanvas);
             const pacmanPos = { x: vCanvas.clientWidth / 2, y: vCanvas.clientHeight / 2 };
 
-            function drawVectorScene(direction = null) {
+        function drawVectorScene(direction = null) {
                 if (!vCtx) return;
                 vCtx.clearRect(0, 0, vCanvas.width, vCanvas.height);
                 drawPacman(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, 25, 0.35);
                 if (direction) {
                     drawVector(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, vCanvas.clientWidth / 2 + direction.x * 60, vCanvas.clientHeight / 2 + direction.y * 60, '#3B82F6');
+            // rótulo do vetor
+            vCtx.fillStyle = '#9CA3AF';
+            vCtx.font = '10px "Press Start 2P"';
+            vCtx.textAlign = 'left';
+            vCtx.fillText(`d=(${direction.x}, ${direction.y})`, 8, 16);
                 }
             }
             
@@ -469,6 +583,21 @@
             window.addEventListener('resize', initializeCanvases);
 
             initializeCanvases();
+
+            // copiar comando de execução
+            const copyBtn = document.getElementById('copy-run');
+            if (copyBtn && navigator.clipboard) {
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText('cd c\\\\Users\\\\lucas\\\\IdeaProjects\\\\capstone_algebra\npython pacman.py');
+                        copyBtn.textContent = 'Copiado!';
+                        setTimeout(() => (copyBtn.textContent = 'Copiar comando'), 1500);
+                    } catch (e) {
+                        copyBtn.textContent = 'Falhou :(';
+                        setTimeout(() => (copyBtn.textContent = 'Copiar comando'), 1500);
+                    }
+                });
+            }
         });
     </script>
 </body>
