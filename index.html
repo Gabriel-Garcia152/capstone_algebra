@@ -172,7 +172,7 @@ python pacman.py</code></pre>
                             para a direita.
                         </p>
                         <p class="mb-4 text-gray-600 leading-relaxed">
-                            No jogo, a nova posição é calculada por \( \vec{p}' = \vec{p} + v \cdot \vec{d} \), onde <em>v</em> é a velocidade. Em um grid, <em>d⃗</em> costuma ser um dos vetores base: (1,0), (-1,0), (0,1), (0,-1).
+                            No jogo, a nova posição é calculada por \( \vec{p}' = \vec{p} + v \cdot \vec{d} \), onde \(v\) é a velocidade. Em um grid, \(\vec{d}\) costuma ser um dos vetores base: (1,0), (-1,0), (0,1), (0,-1).
                         </p>
                         <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
                             <p class="font-semibold mb-2">Código (conceito em Python):</p>
@@ -208,7 +208,7 @@ px, py = px + dx*speed, py + dy*speed</code></pre>
                            \[ \vec{v}_{\text{caminho}} = \vec{p}_{\text{pacman}} - \vec{p}_{\text{fantasma}} \]
                         </p>
                         <p class="mb-4 text-gray-600 leading-relaxed">
-                            Esse vetor aponta a direção geral de movimento. Em cada decisão, o fantasma escolhe a ação que mais aproxima sua posição ao longo de <em>v⃗<sub>caminho</sub></em>.
+                            Esse vetor aponta a direção geral de movimento. Em cada decisão, o fantasma escolhe a ação que mais aproxima sua posição ao longo de \(\vec{v}_{\text{caminho}}\).
                         </p>
                         <div class="bg-gray-50 border rounded p-3 text-xs text-gray-700">
                             <p class="font-semibold mb-2">Código (conceito em Python):</p>
@@ -413,7 +413,6 @@ if pode_mover(A, no_atual, prox_no):
                 drawPacman(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, 25, 0.35);
                 if (direction) {
                     drawVector(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, vCanvas.clientWidth / 2 + direction.x * 60, vCanvas.clientHeight / 2 + direction.y * 60, '#3B82F6');
-            // rótulo do vetor
             vCtx.fillStyle = '#9CA3AF';
             vCtx.font = '10px "Press Start 2P"';
             vCtx.textAlign = 'left';
