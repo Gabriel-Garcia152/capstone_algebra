@@ -314,7 +314,7 @@ class Ghost:
         if self.x_pos < -30:
             self.x_pos = 900
         elif self.x_pos > 900:
-            self.x_pos - 30
+            self.x_pos = -30
         return self.x_pos, self.y_pos, self.direction
 
     def move_blinky(self):
@@ -420,7 +420,7 @@ class Ghost:
         if self.x_pos < -30:
             self.x_pos = 900
         elif self.x_pos > 900:
-            self.x_pos - 30
+            self.x_pos = -30
         return self.x_pos, self.y_pos, self.direction
 
     def move_inky(self):
@@ -542,7 +542,7 @@ class Ghost:
         if self.x_pos < -30:
             self.x_pos = 900
         elif self.x_pos > 900:
-            self.x_pos - 30
+            self.x_pos = -30
         return self.x_pos, self.y_pos, self.direction
 
     def move_pinky(self):
@@ -667,7 +667,7 @@ class Ghost:
         if self.x_pos < -30:
             self.x_pos = 900
         elif self.x_pos > 900:
-            self.x_pos - 30
+            self.x_pos = -30
         return self.x_pos, self.y_pos, self.direction
 
 
@@ -911,6 +911,11 @@ def move_player(play_x, play_y):
 
 
 def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
+    # Alvos (targets) dos fantasmas conforme comportamento clássico (aproximação simples)
+    # - Blinky: persegue Pac-Man
+    # - Pinky: mira 4 tiles à frente da direção do Pac-Man
+    # - Inky: mira 2x o vetor de Blinky até 2 tiles à frente de Pac-Man
+    # - Clyde: persegue quando longe; se a <= 8 tiles, vai para o canto inferior esquerdo (scatter)
     if player_x < 450:
         runaway_x = 900
     else:
@@ -920,6 +925,41 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
     else:
         runaway_y = 0
     return_target = (380, 400)
+
+    # tamanhos de tile e pontos auxiliares
+    num1, num2 = _tile_sizes()
+    # posição "à frente" de Pac-Man (4 tiles) para Pinky
+    if direction == 0:
+        pink_ahead = (player_x + 4 * num2, player_y)
+    elif direction == 1:
+        pink_ahead = (player_x - 4 * num2, player_y)
+    elif direction == 2:
+        pink_ahead = (player_x, player_y - 4 * num1)
+    else:
+        pink_ahead = (player_x, player_y + 4 * num1)
+
+    # ponto 2 tiles à frente para Inky
+    if direction == 0:
+        two_ahead = (player_x + 2 * num2, player_y)
+    elif direction == 1:
+        two_ahead = (player_x - 2 * num2, player_y)
+    elif direction == 2:
+        two_ahead = (player_x, player_y - 2 * num1)
+    else:
+        two_ahead = (player_x, player_y + 2 * num1)
+
+    # alvo de Inky baseado no vetor a partir de Blinky
+    vx = two_ahead[0] - blink_x
+    vy = two_ahead[1] - blink_y
+    ink_vector_target = (blink_x + 2 * vx, blink_y + 2 * vy)
+
+    # distância de Clyde em tiles
+    clyde_center = (clyd_x + 22, clyd_y + 22)
+    pac_center = (player_x + 23, player_y + 24)
+    dx_tiles = abs(pac_center[0] - clyde_center[0]) / float(num2)
+    dy_tiles = abs(pac_center[1] - clyde_center[1]) / float(num1)
+    clyde_dist_tiles = math.sqrt(dx_tiles * dx_tiles + dy_tiles * dy_tiles)
+    clyde_scatter_corner = _tile_center(1, 31)  # canto inferior esquerdo aproximado
     if powerup:
         if not blinky.dead and not eaten_ghost[0]:
             blink_target = (runaway_x, runaway_y)
@@ -939,7 +979,7 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
                 ink_target = (player_x, player_y)
         else:
             ink_target = return_target
-        if not pinky.dead:
+        if not pinky.dead and not eaten_ghost[2]:
             pink_target = (player_x, runaway_y)
         elif not pinky.dead and eaten_ghost[2]:
             if 340 < pink_x < 560 and 340 < pink_y < 500:
@@ -969,21 +1009,24 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
             if 340 < ink_x < 560 and 340 < ink_y < 500:
                 ink_target = (400, 100)
             else:
-                ink_target = (player_x, player_y)
+                # Inky: alvo pelo vetor de Blinky
+                ink_target = ink_vector_target
         else:
             ink_target = return_target
         if not pinky.dead:
             if 340 < pink_x < 560 and 340 < pink_y < 500:
                 pink_target = (400, 100)
             else:
-                pink_target = (player_x, player_y)
+                # Pinky: 4 tiles à frente
+                pink_target = pink_ahead
         else:
             pink_target = return_target
         if not clyde.dead:
             if 340 < clyd_x < 560 and 340 < clyd_y < 500:
                 clyd_target = (400, 100)
             else:
-                clyd_target = (player_x, player_y)
+                # Clyde: se perto (<=8 tiles), vai pro canto; senão persegue
+                clyd_target = clyde_scatter_corner if clyde_dist_tiles <= 8.0 else (player_x, player_y)
         else:
             clyd_target = return_target
     return [blink_target, ink_target, pink_target, clyd_target]
@@ -1110,130 +1153,8 @@ while run:
                 game_over = True
                 moving = False
                 startup_counter = 0
-    if powerup and player_circle.colliderect(blinky.rect) and eaten_ghost[0] and not blinky.dead:
-        if lives > 0:
-            powerup = False
-            power_counter = 0
-            lives -= 1
-            startup_counter = 0
-            player_x = 450
-            player_y = 663
-            direction = 0
-            direction_command = 0
-            blinky_x = 56
-            blinky_y = 58
-            blinky_direction = 0
-            inky_x = 440
-            inky_y = 388
-            inky_direction = 2
-            pinky_x = 440
-            pinky_y = 438
-            pinky_direction = 2
-            clyde_x = 440
-            clyde_y = 438
-            clyde_direction = 2
-            eaten_ghost = [False, False, False, False]
-            blinky_dead = False
-            inky_dead = False
-            clyde_dead = False
-            pinky_dead = False
-        else:
-            game_over = True
-            moving = False
-            startup_counter = 0
-    if powerup and player_circle.colliderect(inky.rect) and eaten_ghost[1] and not inky.dead:
-        if lives > 0:
-            powerup = False
-            power_counter = 0
-            lives -= 1
-            startup_counter = 0
-            player_x = 450
-            player_y = 663
-            direction = 0
-            direction_command = 0
-            blinky_x = 56
-            blinky_y = 58
-            blinky_direction = 0
-            inky_x = 440
-            inky_y = 388
-            inky_direction = 2
-            pinky_x = 440
-            pinky_y = 438
-            pinky_direction = 2
-            clyde_x = 440
-            clyde_y = 438
-            clyde_direction = 2
-            eaten_ghost = [False, False, False, False]
-            blinky_dead = False
-            inky_dead = False
-            clyde_dead = False
-            pinky_dead = False
-        else:
-            game_over = True
-            moving = False
-            startup_counter = 0
-    if powerup and player_circle.colliderect(pinky.rect) and eaten_ghost[2] and not pinky.dead:
-        if lives > 0:
-            powerup = False
-            power_counter = 0
-            lives -= 1
-            startup_counter = 0
-            player_x = 450
-            player_y = 663
-            direction = 0
-            direction_command = 0
-            blinky_x = 56
-            blinky_y = 58
-            blinky_direction = 0
-            inky_x = 440
-            inky_y = 388
-            inky_direction = 2
-            pinky_x = 440
-            pinky_y = 438
-            pinky_direction = 2
-            clyde_x = 440
-            clyde_y = 438
-            clyde_direction = 2
-            eaten_ghost = [False, False, False, False]
-            blinky_dead = False
-            inky_dead = False
-            clyde_dead = False
-            pinky_dead = False
-        else:
-            game_over = True
-            moving = False
-            startup_counter = 0
-    if powerup and player_circle.colliderect(clyde.rect) and eaten_ghost[3] and not clyde.dead:
-        if lives > 0:
-            powerup = False
-            power_counter = 0
-            lives -= 1
-            startup_counter = 0
-            player_x = 450
-            player_y = 663
-            direction = 0
-            direction_command = 0
-            blinky_x = 56
-            blinky_y = 58
-            blinky_direction = 0
-            inky_x = 440
-            inky_y = 388
-            inky_direction = 2
-            pinky_x = 440
-            pinky_y = 438
-            pinky_direction = 2
-            clyde_x = 440
-            clyde_y = 438
-            clyde_direction = 2
-            eaten_ghost = [False, False, False, False]
-            blinky_dead = False
-            inky_dead = False
-            clyde_dead = False
-            pinky_dead = False
-        else:
-            game_over = True
-            moving = False
-            startup_counter = 0
+    # Nota: durante powerup, colisões com fantasmas devem ser sempre comestíveis (ou olhos inofensivos),
+    # portanto não há penalidade de morte nesse estado.
     if powerup and player_circle.colliderect(blinky.rect) and not blinky.dead and not eaten_ghost[0]:
         blinky_dead = True
         eaten_ghost[0] = True
