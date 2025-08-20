@@ -412,7 +412,7 @@ if pode_mover(A, no_atual, prox_no):
                 vCtx.clearRect(0, 0, vCanvas.width, vCanvas.height);
                 drawPacman(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, 25, 0.35);
                 if (direction) {
-                    drawVector(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, vCanvas.clientWidth / 2 + direction.x * 60, vCanvas.clientHeight / 2 + direction.y * 60, '#3B82F6');
+                    drawVector(vCtx, vCanvas.clientWidth / 2, vCanvas.clientHeight / 2, vCanvas.clientWidth / 2 + direction.x * 60, vCanvas.clientHeight / 2 - direction.y * 60, '#3B82F6');
             vCtx.fillStyle = '#9CA3AF';
             vCtx.font = '10px "Press Start 2P"';
             vCtx.textAlign = 'left';
@@ -420,8 +420,8 @@ if pode_mover(A, no_atual, prox_no):
                 }
             }
             
-            document.getElementById('dir-up').addEventListener('mouseenter', () => drawVectorScene({x: 0, y: -1}));
-            document.getElementById('dir-down').addEventListener('mouseenter', () => drawVectorScene({x: 0, y: 1}));
+            document.getElementById('dir-up').addEventListener('mouseenter', () => drawVectorScene({x: 0, y: 1}));
+            document.getElementById('dir-down').addEventListener('mouseenter', () => drawVectorScene({x: 0, y: -1}));
             document.getElementById('dir-left').addEventListener('mouseenter', () => drawVectorScene({x: -1, y: 0}));
             document.getElementById('dir-right').addEventListener('mouseenter', () => drawVectorScene({x: 1, y: 0}));
             [...document.querySelectorAll('#dir-up, #dir-down, #dir-left, #dir-right')].forEach(el => {
